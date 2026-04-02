@@ -57,7 +57,7 @@ public:
 
     const double UPPER_LIMIT_RADIANS_PER_SECOND = 27.5;
 
-    const std::string DEFAULT_ROBOT_MODE = "sim";
+    const std::string DEFAULT_ROBOT_MODE = "real";  // change to "sim" for testing on computer!
 
 private:
     double wheelBaseWidth_ = DEFAULT_WHEEL_BASE_WIDTH;

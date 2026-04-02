@@ -103,12 +103,10 @@ void ImageProcessor::process_image() {
 }
 
 void ImageProcessor::publish_obj_position() {
-    // distance.data = 7.83;
     object_position_topic_->publish(position);
 }
 
 void ImageProcessor::publish_obj_size() {
-    // position.data = 0.24;
     object_size_topic_->publish(size);
 }
 
