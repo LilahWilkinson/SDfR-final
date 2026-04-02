@@ -4,10 +4,6 @@
 SteerRelbot::SteerRelbot() : Node("steer_relbot") {
     RCLCPP_INFO(this->get_logger(), "Init");
 
-    // declaring parameters
-    // this->declare_parameter("path_", SteerRelbot::DEFAULT_PATH);
-    // this->declare_parameter("direction_", SteerRelbot::DEFAULT_DIRECTION);
-
     // initialize attributes
     left_velocity = 0;
     right_velocity = 0;
@@ -54,39 +50,47 @@ void SteerRelbot::size_topic_callback(const example_interfaces::msg::Float64::Sh
 }
 
 void SteerRelbot::calculate_velocity() {
-    double distance_scale = -0.01;
-    double distance_offset = 0.75;
+    double distance_scale = -0.36;
+    double distance_offset = 0.27;
     double distance = distance_scale * object_size->data + distance_offset; // approximate distance in m based on object size relative to FOV size
     RCLCPP_INFO(this->get_logger(), "Approximate distance: %f", distance);
-    double speed = 3;
+    double speed = 20;
     double turn = 1;
+    double setpoint_distance = 0.15;
+    double relative_distance = distance - setpoint_distance;
 
-    if (distance > 0){
+    if (object_size->data < 0.0001) { // if no object is detected
+        right_velocity = 0;
+        left_velocity =  0;
+    }
+    else if (relative_distance > 0){    // farther than setpoint following distance
+        RCLCPP_INFO(this->get_logger(), "Going forward - Approximate distance: %f, relative distance: %f", distance, relative_distance);
         if (object_position < 0) {
-            right_velocity = distance * speed - object_position->data * turn;
-            left_velocity = -distance * speed;    
+            right_velocity = relative_distance * speed - object_position->data * turn;
+            left_velocity = -relative_distance * speed;    
         }
         else if (object_position > 0) {
-            right_velocity = distance * speed;    
-            left_velocity = -distance * speed - object_position->data * turn;
+            right_velocity = relative_distance * speed;    
+            left_velocity = -relative_distance * speed - object_position->data * turn;
         }
         else {
-            right_velocity = distance * speed;
-            left_velocity = -distance * speed;
+            right_velocity = relative_distance * speed;
+            left_velocity = -relative_distance * speed;
         }
     }
-    else if (distance < 0.5){
+    else if (relative_distance < 0){    // closer than setpoint following distance
+        RCLCPP_INFO(this->get_logger(), "Going backward - Approximate distance: %f, relative distance: %f", distance, relative_distance);
         if (object_position < 0) {
-            right_velocity = -distance * speed + object_position->data * turn;
-            left_velocity = distance * speed;    
+            right_velocity = relative_distance * speed - object_position->data * turn;
+            left_velocity = - relative_distance * speed;    
         }
         else if (object_position > 0) {
-            right_velocity = -distance * speed;    
-            left_velocity = distance * speed + object_position->data * turn;
+            right_velocity = relative_distance * speed;    
+            left_velocity = - relative_distance * speed - object_position->data * turn;
         }
         else {
-            right_velocity = -distance * speed;
-            left_velocity =  distance * speed;
+            right_velocity = relative_distance * speed;
+            left_velocity = - relative_distance * speed;
         }
     }
     else {

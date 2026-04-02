@@ -74,8 +74,8 @@ void ImageProcessor::process_image() {
     // finding moments
     cv::Moments obj_moments = cv::moments(cv_image_processed);
 
-    double moment_10 = obj_moments.m10;
-    double area = obj_moments.m00;
+    double moment_10 = obj_moments.m10 / 255;
+    double area = obj_moments.m00 / 255;
 
     if (area > 25) {
         //calculate the position of the ball
@@ -88,19 +88,9 @@ void ImageProcessor::process_image() {
 
         double total_area = image_width*image_height;
         double size_frac = area/total_area;
-        // double size_ratio;
-        // if(size_frac != 0){
-        //     size_ratio = size_frac/past_size_frac;
-        // }
-        // else{
-        //     size_ratio = 1;
-        // }
 
         position.data = x_percent;
         size.data = size_frac;
-
-
-        // past_size_frac = size_frac;
     }
     else {
         position.data = 0;
