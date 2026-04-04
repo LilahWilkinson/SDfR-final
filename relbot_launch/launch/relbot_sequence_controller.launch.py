@@ -19,8 +19,8 @@ def generate_launch_description():
             name="turtlesim"
         ),
         Node(
-            package="relbot_sequence_controller",
-            executable="relbot_sequence_controller",
-            name="relbot_sequence_controller"
+            package="test_controller",
+            executable="test_controller",
+            name="test_controller"
         )
     ])

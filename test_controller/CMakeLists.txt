@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(relbot_sequence_controller)
+project(test_controller)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -12,17 +12,17 @@ find_package(example_interfaces REQUIRED)
 
 include_directories(include)
 
-add_executable(relbot_sequence_controller
-src/relbot_sequence_controller.cpp)
+add_executable(test_controller
+src/test_controller.cpp)
 
-ament_target_dependencies(relbot_sequence_controller
+ament_target_dependencies(test_controller
     rclcpp
     example_interfaces
 )
 
 install(
     TARGETS
-        relbot_sequence_controller
+        test_controller
         DESTINATION lib/${PROJECT_NAME}
 )
 
