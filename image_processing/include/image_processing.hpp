@@ -54,7 +54,7 @@ public:
 
 //   const std::string input = "/input";
 //   const std::string output = "/output";
-    const std::string CAMERA_IMAGE = "/output/moving_camera";  // topic name: relbot_simulator publishes to this topic
+    const std::string CAMERA_IMAGE = "/image";  // topic name: relbot_simulator publishes to this topic. For simulator: /output/moving_camera
 
 private:
     // topics
@@ -69,7 +69,7 @@ private:
 
     // HSV tresholds to identify a certain color (green)
     const int min_hue = 30; // 75 red side
-    const int max_hue = 100; // 155 blue side
+    const int max_hue = 80; // 155 blue side
 
     // accept 
     const int min_saturation = 40; // 30

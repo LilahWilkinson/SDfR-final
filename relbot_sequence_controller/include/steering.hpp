@@ -9,6 +9,10 @@
 // message type for velocity
 #include "example_interfaces/msg/float64.hpp"
 
+#ifdef HAS_XRF2_MSGS
+#include "xrf2_msgs/msg/ros2_xeno.hpp"
+#endif
+
 using std::placeholders::_1;
 
 class SteerRelbot : public rclcpp::Node
@@ -34,10 +38,12 @@ private:
     rclcpp::TimerBase::SharedPtr timer_;
 
     // attributes
-    std::shared_ptr<example_interfaces::msg::Float64> object_position;
-    std::shared_ptr<example_interfaces::msg::Float64> object_size;
+    double object_position;
+    double object_size;
     double left_velocity;
     double right_velocity;
+
+    bool xrf2_included_ = false;
 
     // methods
     void create_topics();

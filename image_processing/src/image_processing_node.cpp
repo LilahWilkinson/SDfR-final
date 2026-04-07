@@ -27,7 +27,7 @@ void ImageProcessor::create_topics() {
     camera_input_topic_ = this->create_subscription<sensor_msgs::msg::Image>(
         ImageProcessor::CAMERA_IMAGE, 10, std::bind(&ImageProcessor::camera_topic_callback, this, _1)
     );
-    RCLCPP_INFO(this->get_logger(), "Subscribed to topic: /output/moving_camera");
+    RCLCPP_INFO(this->get_logger(), "Subscribed to topic: /image"); // for simulator: /output/moving_camera
 }
 
 /**
