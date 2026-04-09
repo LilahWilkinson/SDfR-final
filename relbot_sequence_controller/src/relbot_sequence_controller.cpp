@@ -115,9 +115,7 @@ void SteerRelbot::timer_callback() {
     calculate_velocity();
 
     // publish velocity to simulator
-    example_interfaces::msg::Float64 left_wheel;
-    example_interfaces::msg::Float64 right_wheel;
-    left_wheel.data = left_velocity;
+    left_wheel.data = -left_velocity;
     right_wheel.data = right_velocity;
     if (xrf2_included_ == false) {
         RCLCPP_INFO(this->get_logger(), "on real RELbot: invert left wheel velocity");

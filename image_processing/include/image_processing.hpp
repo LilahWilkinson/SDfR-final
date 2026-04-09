@@ -68,14 +68,14 @@ private:
     sensor_msgs::msg::Image::SharedPtr input_image;
 
     // HSV tresholds to identify a certain color (green)
-    const int min_hue = 30; // 75 red side
-    const int max_hue = 80; // 155 blue side
+    const int min_hue = 35; // 75 red side
+    const int max_hue = 85; // 155 blue side
 
     // accept 
-    const int min_saturation = 40; // 30
+    const int min_saturation = 45; // 30
     const int max_saturation = 255;
 
-    const int min_value = 40; // 30
+    const int min_value = 65; // 30
     const int max_value = 255;
 
     // object information

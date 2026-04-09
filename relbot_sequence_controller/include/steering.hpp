@@ -43,6 +43,9 @@ private:
     double left_velocity;
     double right_velocity;
 
+    example_interfaces::msg::Float64 left_wheel;
+    example_interfaces::msg::Float64 right_wheel;
+
     bool xrf2_included_ = false;
 
     // methods
