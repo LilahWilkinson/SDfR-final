@@ -68,8 +68,8 @@ void ImageProcessor::process_image() {
     cv::inRange(cv_image, cv::Scalar(min_hue, min_saturation, min_value), cv::Scalar(max_hue, max_saturation, max_value), cv_image_processed);
 
     // morphological opening and closing to remove small objects from binary image and fill small holes in the detected object
-    cv::morphologyEx(cv_image_processed, cv_image_processed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5)));
-    cv::morphologyEx(cv_image_processed, cv_image_processed, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5)));
+    cv::morphologyEx(cv_image_processed, cv_image_processed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(9, 9)));
+    cv::morphologyEx(cv_image_processed, cv_image_processed, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(9, 9)));
 
     // finding moments
     cv::Moments obj_moments = cv::moments(cv_image_processed);

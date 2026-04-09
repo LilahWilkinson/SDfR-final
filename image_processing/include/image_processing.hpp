@@ -69,13 +69,13 @@ private:
 
     // HSV tresholds to identify a certain color (green)
     const int min_hue = 35; // 75 red side
-    const int max_hue = 85; // 155 blue side
+    const int max_hue = 95; // 155 blue side (09/04: 85)
 
     // accept 
     const int min_saturation = 45; // 30
     const int max_saturation = 255;
 
-    const int min_value = 65; // 30
+    const int min_value = 55; // 30 (09/04: 65)
     const int max_value = 255;
 
     // object information
