@@ -11,6 +11,7 @@ SteerRelbot::SteerRelbot() : Node("steer_relbot") {
     // initialize attributes
     left_velocity = 0;
     right_velocity = 0;
+    signal_interval_counter = 0;
 
     // initialize topics
     create_topics();
@@ -42,11 +43,13 @@ void SteerRelbot::create_topics() {
 
 void SteerRelbot::position_topic_callback(const example_interfaces::msg::Float64::SharedPtr pos) {
     object_position = pos->data;
+    signal_interval_counter = 0; // reset counter of velocity callbacks since last position update
     // RCLCPP_INFO(this->get_logger(), "Received object position");
 }
 
 void SteerRelbot::size_topic_callback(const example_interfaces::msg::Float64::SharedPtr size) {
     object_size = size->data;
+    signal_interval_counter = 0; // reset counter of velocity callbacks since last size update
     // RCLCPP_INFO(this->get_logger(), "Received object size");
 }
 
@@ -114,11 +117,18 @@ void SteerRelbot::timer_callback() {
     // calculate velocity
     calculate_velocity();
 
+    // check how many callbacks have passed since last position/size update. If more than 2 seconds, set velocity to 0
+    signal_interval_counter = signal_interval_counter + 1;
+    if (signal_interval_counter >= int(2 * DEFAULT_SETPOINT_STREAM)) {
+        left_velocity = 0;
+        right_velocity = 0;
+    }
+
     // publish velocity to simulator
     left_wheel.data = -left_velocity;
     right_wheel.data = right_velocity;
     if (xrf2_included_ == false) {
-        RCLCPP_INFO(this->get_logger(), "on real RELbot: invert left wheel velocity");
+        RCLCPP_INFO(this->get_logger(), "on simulated RELbot: invert left wheel velocity");
         left_wheel.data = left_velocity;
     }
     RCLCPP_INFO(this->get_logger(), "Velocity: left %f, right %f", left_velocity, right_velocity);

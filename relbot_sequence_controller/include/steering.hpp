@@ -36,6 +36,7 @@ private:
 
     // Timer
     rclcpp::TimerBase::SharedPtr timer_;
+    int signal_interval_counter; // used to check if new signals are still coming in
 
     // attributes
     double object_position;
