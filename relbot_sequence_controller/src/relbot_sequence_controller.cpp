@@ -75,30 +75,30 @@ void SteerRelbot::calculate_velocity() {
         RCLCPP_INFO(this->get_logger(), "Going forward - Approximate distance: %f, relative distance: %f", distance, relative_distance);
         if (object_position < 0) {
             right_velocity = relative_distance * speed - object_position * turn;
-            left_velocity = -relative_distance * speed;    
+            left_velocity = relative_distance * speed;    
         }
         else if (object_position > 0) {
             right_velocity = relative_distance * speed;    
-            left_velocity = -relative_distance * speed - object_position * turn;
+            left_velocity = relative_distance * speed + object_position * turn;
         }
         else {
             right_velocity = relative_distance * speed;
-            left_velocity = -relative_distance * speed;
+            left_velocity = relative_distance * speed;
         }
     }
     else if (relative_distance < 0){    // closer than setpoint following distance
         RCLCPP_INFO(this->get_logger(), "Going backward - Approximate distance: %f, relative distance: %f", distance, relative_distance);
         if (object_position < 0) {
-            right_velocity = relative_distance * speed - object_position * turn;
-            left_velocity = - relative_distance * speed;    
+            right_velocity = -relative_distance * speed + object_position * turn;
+            left_velocity = -relative_distance * speed;    
         }
         else if (object_position > 0) {
-            right_velocity = relative_distance * speed;    
-            left_velocity = - relative_distance * speed - object_position * turn;
+            right_velocity = -relative_distance * speed;    
+            left_velocity = -relative_distance * speed - object_position * turn;
         }
         else {
-            right_velocity = relative_distance * speed;
-            left_velocity = - relative_distance * speed;
+            right_velocity = -relative_distance * speed;
+            left_velocity = -relative_distance * speed;
         }
     }
     else {
@@ -117,7 +117,7 @@ void SteerRelbot::timer_callback() {
     // publish velocity to simulator
     example_interfaces::msg::Float64 left_wheel;
     example_interfaces::msg::Float64 right_wheel;
-    left_wheel.data = -left_velocity;
+    left_wheel.data = left_velocity;
     right_wheel.data = right_velocity;
     if (xrf2_included_ == false) {
         RCLCPP_INFO(this->get_logger(), "on real RELbot: invert left wheel velocity");
