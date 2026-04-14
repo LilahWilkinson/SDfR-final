@@ -1,9 +1,17 @@
+//==================================================================================================
+// Authors : I.M. Kramers & L.S. Wilkinson
+// Group : 14
+// License : LGPL open source license
+//
+// Brief : 
+//==================================================================================================
+
 #include "image_processing.hpp"
 
 ImageProcessor::ImageProcessor() : Node("image_processing_node") {
     RCLCPP_INFO(this->get_logger(), "Init");
 
-    // initialize object data variables to 0
+    // initialize object attributes to 0
     image_width = 0;
     image_height = 0;
     past_size_frac = 1;
@@ -27,7 +35,7 @@ void ImageProcessor::create_topics() {
     camera_input_topic_ = this->create_subscription<sensor_msgs::msg::Image>(
         ImageProcessor::CAMERA_IMAGE, 10, std::bind(&ImageProcessor::camera_topic_callback, this, _1)
     );
-    RCLCPP_INFO(this->get_logger(), "Subscribed to topic: /image"); // for simulator: /output/moving_camera
+    RCLCPP_INFO(this->get_logger(), "Subscribed to topic: /image"); // for simulator: `/output/moving_camera`
 }
 
 /**
@@ -37,7 +45,6 @@ void ImageProcessor::create_topics() {
  */
 void ImageProcessor::camera_topic_callback(const sensor_msgs::msg::Image::SharedPtr msg_cam_img) {
     input_image = msg_cam_img;
-    // RCLCPP_INFO(this->get_logger(), "Received image...");
 
     // check that image is not empty
     if (input_image == nullptr) {
@@ -45,14 +52,22 @@ void ImageProcessor::camera_topic_callback(const sensor_msgs::msg::Image::Shared
         return;
     }
     else {
-        process_image();
+        // find position and size of green object in image
+        process_image(); 
+
+        // publish found values
         publish_obj_position();
         publish_obj_size();
     }
 };
 
 /**
- * @brief Image processing. Method based on https://www.opencv-srf.com/2010/09/object-detection-using-color-seperation.html
+ * @brief Image processing. Method based on https://www.opencv-srf.com/2010/09/object-detection-using-color-seperation.html.
+ * the image is first converted to OpenCV HSV format. For each pixel, it is checked whether it is within the allowed HSV
+ * range specified in image_processing.hpp. A binary mask is created with all accepted pixels. Morphological opening and 
+ * closing is used to remove small objects and holes. Object moments are calculated to get relative object x-position. 
+ * relative size is calculated from the object pixel count and total picture area. Finally, the processed image is
+ * published for monitoring purposes.
  */
 void ImageProcessor::process_image() {
     // get image dimensions
@@ -68,27 +83,29 @@ void ImageProcessor::process_image() {
     cv::inRange(cv_image, cv::Scalar(min_hue, min_saturation, min_value), cv::Scalar(max_hue, max_saturation, max_value), cv_image_processed);
 
     // morphological opening and closing to remove small objects from binary image and fill small holes in the detected object
-    cv::morphologyEx(cv_image_processed, cv_image_processed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(9, 9)));
-    cv::morphologyEx(cv_image_processed, cv_image_processed, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(9, 9)));
+    cv::morphologyEx(cv_image_processed, cv_image_processed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(15, 15)));
+    cv::morphologyEx(cv_image_processed, cv_image_processed, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(15, 15)));
 
     // finding moments
     cv::Moments obj_moments = cv::moments(cv_image_processed);
-
-    double moment_10 = obj_moments.m10 / 255;
-    double area = obj_moments.m00 / 255;
+    double moment_10 = obj_moments.m10 / 255;   // divide by 255 because the binary image has values to 255 instead of 1
+    double area = obj_moments.m00 / 255;        
 
     if (area > 25) {
-        //calculate the position of the ball
+        //calculate the x-position of the object (horizontal)
         int obj_x_position = moment_10 / area;
 
+        // convert to x-position relative to image center
         int half_image_width = int(image_width/2);
         int x_pos_from_center = int(obj_x_position - half_image_width);
         double x_percent = double(x_pos_from_center)/double(half_image_width);
         RCLCPP_INFO(this->get_logger(), "x_percent: %f", x_percent);
 
+        // calculate object size relative to total size
         double total_area = image_width*image_height;
         double size_frac = area/total_area;
 
+        // update attributes
         position.data = x_percent;
         size.data = size_frac;
     }

@@ -54,13 +54,13 @@ void SteerRelbot::size_topic_callback(const example_interfaces::msg::Float64::Sh
 }
 
 void SteerRelbot::calculate_velocity() {
-    double distance_scale = -0.36;
-    double distance_offset = 0.27;
-    double distance = distance_scale * object_size + distance_offset; // approximate distance in m based on object size relative to FOV size
+    double distance_scale = -0.1558;
+    double distance_offset = -0.1198;
+    double distance = distance_scale*std::log(object_size)+distance_offset; // approximate distance in m based on object size relative to FOV size
     RCLCPP_INFO(this->get_logger(), "Approximate distance: %f, object size: %f, object position: %f", distance, object_size, object_position);
-    double speed = 5;
-    double turn = 1;
-    double setpoint_distance = 1;
+    double speed = 10;
+    double turn = 5;
+    double setpoint_distance = 0.3;
     double relative_distance = distance - setpoint_distance;
 
     if (object_size < 0.0001) { // if no object is detected
@@ -86,16 +86,16 @@ void SteerRelbot::calculate_velocity() {
     else if (relative_distance < 0){    // closer than setpoint following distance
         RCLCPP_INFO(this->get_logger(), "Going backward - Approximate distance: %f, relative distance: %f", distance, relative_distance);
         if (object_position < 0) {
-            right_velocity = -relative_distance * speed + object_position * turn;
-            left_velocity = -relative_distance * speed;    
+            right_velocity = relative_distance * speed + object_position * turn;
+            left_velocity = relative_distance * speed;    
         }
         else if (object_position > 0) {
-            right_velocity = -relative_distance * speed;    
-            left_velocity = -relative_distance * speed - object_position * turn;
+            right_velocity = relative_distance * speed;    
+            left_velocity = relative_distance * speed - object_position * turn;
         }
         else {
-            right_velocity = -relative_distance * speed;
-            left_velocity = -relative_distance * speed;
+            right_velocity = relative_distance * speed;
+            left_velocity = relative_distance * speed;
         }
     }
     else {
@@ -119,14 +119,14 @@ void SteerRelbot::timer_callback() {
     }
 
     // publish velocity to simulator
-    left_wheel.data = -left_velocity;
+    left_wheel.data = left_velocity;
     right_wheel.data = right_velocity;
     // if (xrf2_included_ == false) {
     //     RCLCPP_INFO(this->get_logger(), "on simulated RELbot: invert left wheel velocity");
     //     left_wheel.data = left_velocity;
     // }
-    if (DEFAULT_ROBOT_MODE == "false") {
-        left_wheel.data = left_velocity;
+    if (DEFAULT_ROBOT_MODE == "sim") {
+        left_wheel.data = -left_velocity;
     }
     RCLCPP_INFO(this->get_logger(), "Velocity: left %f, right %f", left_velocity, right_velocity);
     left_wheel_topic_->publish(left_wheel);

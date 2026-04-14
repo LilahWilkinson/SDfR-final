@@ -1,4 +1,4 @@
-\//==================================================================================================
+//==================================================================================================
 // Authors : I.M. Kramers & L.S. Wilkinson
 // Group : 14
 // License : LGPL open source license
@@ -54,24 +54,22 @@ public:
 
 private:
     // topics
-    rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr camera_input_topic_;
+    rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr camera_input_topic_;           // input image
     rclcpp::Publisher<example_interfaces::msg::Float64>::SharedPtr object_position_topic_;
     rclcpp::Publisher<example_interfaces::msg::Float64>::SharedPtr object_size_topic_;
-    // publish processed image (binary): used to check whether the object is identified correctly
-    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr camera_output_topic_; 
+    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr camera_output_topic_;             // publish processed image for monitoring
 
     // received image
     sensor_msgs::msg::Image::SharedPtr input_image;
 
     // HSV tresholds to identify a certain color (green)
-    const int min_hue = 35; // 75 red side
-    const int max_hue = 95; // 155 blue side (09/04: 85)
+    const int min_hue = 35;                     // 75 red side
+    const int max_hue = 95;                     // 155 blue side (09/04: 85)
 
-    // accept 
-    const int min_saturation = 45; // 30
+    const int min_saturation = 45;              // 30
     const int max_saturation = 255;
 
-    const int min_value = 55; // 30 (09/04: 65)
+    const int min_value = 55;                   // 30 (09/04: 65)
     const int max_value = 255;
 
     // object information
@@ -97,7 +95,9 @@ private:
     void camera_topic_callback(const sensor_msgs::msg::Image::SharedPtr msg_cam_img);
 
     /**
-     * @brief Image processing
+     * @brief Image processing in OpenCV. Converts to HSV, creates binary mask of detected
+     * pixels, then uses morphological processing (opening and closing) for better accuracy. 
+     * Publishes processed image.
      */
     void process_image();
 
@@ -112,7 +112,10 @@ private:
     void publish_obj_size();
 
     /**
-     * @brief Publishes the tresholded and morphed image
+     * @brief Converts the tresholded and morphed image to sensor_msgs::msg::Image format,
+     * then publishes it.
+     * 
+     * @param image processed image, in cv::Mat format
      */
     void publish_processed_image(cv::Mat image);
 };
