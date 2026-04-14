@@ -119,14 +119,14 @@ void SteerRelbot::timer_callback() {
     }
 
     // publish velocity to simulator
-    left_wheel.data = -left_velocity;
+    left_wheel.data = left_velocity;
     right_wheel.data = right_velocity;
     // if (xrf2_included_ == false) {
     //     RCLCPP_INFO(this->get_logger(), "on simulated RELbot: invert left wheel velocity");
     //     left_wheel.data = left_velocity;
     // }
-    if (DEFAULT_ROBOT_MODE == "false") {
-        left_wheel.data = left_velocity;
+    if (DEFAULT_ROBOT_MODE == "sim") {
+        left_wheel.data = -left_velocity;
     }
     RCLCPP_INFO(this->get_logger(), "Velocity: left %f, right %f", left_velocity, right_velocity);
     left_wheel_topic_->publish(left_wheel);
