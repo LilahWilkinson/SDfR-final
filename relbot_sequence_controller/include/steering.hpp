@@ -9,9 +9,9 @@
 // message type for velocity
 #include "example_interfaces/msg/float64.hpp"
 
-#ifdef HAS_XRF2_MSGS
-#include "xrf2_msgs/msg/ros2_xeno.hpp"
-#endif
+// #ifdef HAS_XRF2_MSGS
+// #include "xrf2_msgs/msg/ros2_xeno.hpp"
+// #endif
 
 using std::placeholders::_1;
 
@@ -47,7 +47,8 @@ private:
     example_interfaces::msg::Float64 left_wheel;
     example_interfaces::msg::Float64 right_wheel;
 
-    bool xrf2_included_ = false;
+    // bool xrf2_included_ = false;
+    const std::string DEFAULT_ROBOT_MODE = "real";  // change to "sim" for testing on computer!
 
     // methods
     void create_topics();

@@ -1,8 +1,14 @@
 Package relbot_sequence_controller
 -----------------------------------------------
 #### Description: 
-This package contains a skeleton node that you will have to supplement with an algorithm.
+This package contains a node that receives information from image_processing (tracked object relative position and size), calculates appropriate left and right wheel velocities to follow the object, and publishes these for use by either the real RELbot or simulator.
 
+#### Input:
+`/image_processing/object_position`
+- Type: example_interfaces/msg/Float64
+
+`/image_processing/object_size`
+- Type: example_interfaces/msg/Float64
 
 #### Output:
 `/input/left_motor/setpoint_vel`
@@ -14,29 +20,29 @@ This package contains a skeleton node that you will have to supplement with an a
 #### Run:
 To start the node run the following command:
 
-`ros2 run relbot_sequence_controller steer_robot`
+`ros2 run relbot_sequence_controller steer_robot` or `ros2 run relbot_sequence_controller relbot_sequence_controller`
 
-You can also launch this node together with turtlesim, the relbot2turtlesim node and the RELbot simulator. Make sure that all nodes are build and sourced in your terminal.
+You can also launch this node together with turtlesim, the relbot2turtlesim node, the RELbot simulator, the RELbot adapter and the image_processing node. Make sure that all nodes are built and sourced in your terminal.
 
 To launch the node, together with the RELbot simulator, relbot2turtlesim and turtlesim run the following command:
 
 `ros2 launch relbot_launch relbot_sequence_controller.launch.py`
 
-#### Parameters:
-path_: choses the path the robot will follow. Initially set to do nothing. Value can be 1-5 (any other will set the robot to be motionless)
-    1: straight line
-    2: circle
-    3: straight line with 90 degree left turn
-    4: square with rounded corners
-    5: user input (see direction_ for how to control)
-    Set with : `ros2 param set /relbot_sequence_controller path_ <value>`
-direction_ : choses the direction when the path is set to user input. Initially set to do nothing. Value can be 6-9 (any other can be used to stop the robot from moving)
-    6: straight
-    7: left turn
-    8: backward
-    9: right turn
-    Set with : `ros2 param set /relbot_sequence_controller direction_ <value>`
+Testing full pipeline with simulated RELbot: to launch the node, together with the RELbot simulator, relbot2turtlesim, turtlesim, RELbot adapter and image processing node, do the following:
+
+- change the variable CAMERA_IMAGE in image_processing/image_processing.hpp to `/output/moving_camera`
+- change the variable DEFAULT_ROBOT_MODE in relbot_adapter/relbot_adapter.hpp to `sim`
+- change the variable DEFAULT_ROBOT_MODE in relbot_sequence_controller/steering.hpp to `sim`
+- run `ros2 launch relbot_launch relbot_simulated_system_final.launch.py`
+
+Testing full pipeline with real RELbot: to launch the node, together with the RELbot adapter and image processing node, do the following:
+
+- change the variable CAMERA_IMAGE in image_processing.hpp to `/image`
+- change the variable DEFAULT_ROBOT_MODE in relbot_adapter/relbot_adapter.hpp to `real`
+- change the variable DEFAULT_ROBOT_MODE in relbot_sequence_controller/steering.hpp to `real`
+- run `ros2 launch relbot_launch relbot_real_system_final.launch.py`
 
 #### Core components:
-- calculate_velocity(): Function that allows the user to chose between 5 settings: 4 prescribed paths and one that allows for user inputs.
-- timer_callback(): publishes the velocity to both wheel 30 times per second.
+- calculate_velocity(): calculates estimated distance (m) of object based on relative size. Calculates appropriate wheel velocities (rad/s) proportional to distance, with left/right variations proportional to object x-position relative to image center.
+- position_topic_callback(), size_topic_callback(): update current position and size attributes whenever topic updates
+- timer_callback(): publishes the velocity to both wheels 30 times per second.

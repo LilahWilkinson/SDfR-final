@@ -4,9 +4,9 @@
 SteerRelbot::SteerRelbot() : Node("steer_relbot") {
     RCLCPP_INFO(this->get_logger(), "Init");
 
-    #ifdef HAS_XRF2_MSGS
-        xrf2_included_ = true;
-    #endif
+    // #ifdef HAS_XRF2_MSGS
+    //     xrf2_included_ = true;
+    // #endif
 
     // initialize attributes
     left_velocity = 0;
@@ -54,12 +54,6 @@ void SteerRelbot::size_topic_callback(const example_interfaces::msg::Float64::Sh
 }
 
 void SteerRelbot::calculate_velocity() {
-    /* comments from Max:
-     *  If object_position is a struct (as I suspect it is), should the
-     *      conditionals under 'else if (relative distance > 0)' not be
-     *      'object_position->data' instead of just 'object_position'?
-     *      This is also the case for the next conditional (< 0).
-     */
     double distance_scale = -0.36;
     double distance_offset = 0.27;
     double distance = distance_scale * object_size + distance_offset; // approximate distance in m based on object size relative to FOV size
@@ -127,8 +121,11 @@ void SteerRelbot::timer_callback() {
     // publish velocity to simulator
     left_wheel.data = -left_velocity;
     right_wheel.data = right_velocity;
-    if (xrf2_included_ == false) {
-        RCLCPP_INFO(this->get_logger(), "on simulated RELbot: invert left wheel velocity");
+    // if (xrf2_included_ == false) {
+    //     RCLCPP_INFO(this->get_logger(), "on simulated RELbot: invert left wheel velocity");
+    //     left_wheel.data = left_velocity;
+    // }
+    if (DEFAULT_ROBOT_MODE == "false") {
         left_wheel.data = left_velocity;
     }
     RCLCPP_INFO(this->get_logger(), "Velocity: left %f, right %f", left_velocity, right_velocity);

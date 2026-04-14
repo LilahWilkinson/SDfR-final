@@ -1,11 +1,10 @@
-/** - Use the input of the light-position indicator, /moving_camera_output of the RELbot simulator 
- *      (just as later in the real case, where the RELbot moves during operation and thus let the webcam 
- *      see moving images of the world). 
- * - Let the NUD produce its outputs in a pace comparable to the pace of its input stream from the webcam, 
- *      so 30 FPS.
- * - Make a launchfile for this test. This makes inspecting your work while grading doable.
- * - 
- */ 
+\//==================================================================================================
+// Authors : I.M. Kramers & L.S. Wilkinson
+// Group : 14
+// License : LGPL open source license
+//
+// Brief : 
+//==================================================================================================
 
 #ifndef IMAGE_PROCESSING_HPP_
 #define IMAGE_PROCESSING_HPP_
@@ -27,11 +26,9 @@
 // Image processing functions
 #include "image_functions_sdfr/image_functions.hpp"
 
-// OpenCV imshow
-// #include "opencv2/core/mat.hpp"
+// OpenCV image processing functions
 #include "opencv2/core.hpp"
 #include "opencv2/highgui.hpp"
-// #include "opencv2/videoio.hpp"
 
 #if __has_include(<cv_bridge/cv_bridge.hpp>)
     #include <cv_bridge/cv_bridge.hpp>
@@ -52,9 +49,8 @@ public:
      */
     ImageProcessor();
 
-//   const std::string input = "/input";
-//   const std::string output = "/output";
-    const std::string CAMERA_IMAGE = "/image";  // topic name: relbot_simulator publishes to this topic. For simulator: /output/moving_camera
+    // topic name to subscribe to (/image for real RELbot and /output/moving_camera for simulator)
+    const std::string CAMERA_IMAGE = "/image";
 
 private:
     // topics
