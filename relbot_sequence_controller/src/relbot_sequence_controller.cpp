@@ -59,7 +59,7 @@ void SteerRelbot::calculate_velocity() {
     double distance = distance_scale*std::log(object_size)+distance_offset; // approximate distance in m based on object size relative to FOV size
     RCLCPP_INFO(this->get_logger(), "Approximate distance: %f, object size: %f, object position: %f", distance, object_size, object_position);
     double speed = 10;
-    double turn = 5;
+    double turn = 3;
     double setpoint_distance = 0.3;
     double relative_distance = distance - setpoint_distance;
 

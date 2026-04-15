@@ -48,7 +48,7 @@ private:
     example_interfaces::msg::Float64 right_wheel;
 
     // bool xrf2_included_ = false;
-    const std::string DEFAULT_ROBOT_MODE = "real";  // change to "sim" for testing on computer!
+    const std::string DEFAULT_ROBOT_MODE = "real";  // "real" for real RELbot, change to "sim" for testing on computer!
 
     // methods
     void create_topics();
