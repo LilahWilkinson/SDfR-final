@@ -3,7 +3,10 @@
 // Group : 14
 // License : LGPL open source license
 //
-// Brief : 
+// Brief : image_processing receives camera output from relbot_simulator or cam2image_vm2ros. Each
+// frame is processed in OpenCV HSV format to detect a green object, and calculate its size relative
+// to the FOV size as well as position relative to FOV x-center. These values are published to
+// separate channels. For monitoring purposes, the processed image is also published.
 //==================================================================================================
 
 #include "image_processing.hpp"
@@ -14,7 +17,6 @@ ImageProcessor::ImageProcessor() : Node("image_processing_node") {
     // initialize object attributes to 0
     image_width = 0;
     image_height = 0;
-    past_size_frac = 1;
     position.data = 0;
     size.data = 0;
 
@@ -23,14 +25,20 @@ ImageProcessor::ImageProcessor() : Node("image_processing_node") {
     RCLCPP_INFO(this->get_logger(), "Created Topics");
 }
 
+/**
+ * @brief Create all topics for this node. One subscription for the webcam input,
+ * and three publishers for the processed image, and object position and size.
+ */
 void ImageProcessor::create_topics() {
     RCLCPP_INFO(this->get_logger(), "Creating topics...");
 
+    // creating publishers
     RCLCPP_INFO(this->get_logger(), "Creating Publishers");
     object_position_topic_ = this->create_publisher<example_interfaces::msg::Float64>("/image_processing/object_position", 1);
     object_size_topic_ = this->create_publisher<example_interfaces::msg::Float64>("/image_processing/object_size", 1);
     camera_output_topic_ = this->create_publisher<sensor_msgs::msg::Image>("/image_processing/processed_image", 1);
 
+    // creating subscriptions
     RCLCPP_INFO(this->get_logger(), "Creating Subscriptions");
     camera_input_topic_ = this->create_subscription<sensor_msgs::msg::Image>(
         ImageProcessor::CAMERA_IMAGE, 10, std::bind(&ImageProcessor::camera_topic_callback, this, _1)
@@ -39,9 +47,11 @@ void ImageProcessor::create_topics() {
 }
 
 /**
- * @brief Handles receiving of received webcam images
+ * @brief Handles receiving of received webcam images. Callback upon receiving an image from the 
+ * simulator or RELbot. Finds the relative size of the tracking object and relative position to 
+ * horizontal image center, and publishes those.
  *
- * @param msg_cam_img webcam image, in sensor_msgs::msg::Image format
+ * @param msg_cam_img webcam image, in sensor_msgs/msg/Image format
  */
 void ImageProcessor::camera_topic_callback(const sensor_msgs::msg::Image::SharedPtr msg_cam_img) {
     input_image = msg_cam_img;
@@ -61,13 +71,13 @@ void ImageProcessor::camera_topic_callback(const sensor_msgs::msg::Image::Shared
     }
 };
 
-/**
- * @brief Image processing. Method based on https://www.opencv-srf.com/2010/09/object-detection-using-color-seperation.html.
- * the image is first converted to OpenCV HSV format. For each pixel, it is checked whether it is within the allowed HSV
- * range specified in image_processing.hpp. A binary mask is created with all accepted pixels. Morphological opening and 
- * closing is used to remove small objects and holes. Object moments are calculated to get relative object x-position. 
- * relative size is calculated from the object pixel count and total picture area. Finally, the processed image is
- * published for monitoring purposes.
+ /**
+ * @brief Image processing to detect a green object in the image. Method based on 
+ * https://www.opencv-srf.com/2010/09/object-detection-using-color-seperation.html. Image is first converted 
+ * to OpenCV HSV format. Each pixel is checked against the target HSV range. A binary mask is created with 
+ * all accepted pixels. Morphological opening and closing is used to remove small objects and holes. Object 
+ * moments are calculated to get relative object x-position. Relative size is calculated from the object pixel 
+ * count and total picture area. Finally, the processed image is published for monitoring purposes.
  */
 void ImageProcessor::process_image() {
     // get image dimensions
@@ -119,14 +129,28 @@ void ImageProcessor::process_image() {
     publish_processed_image(cv_image_processed);
 }
 
+/**
+ * @brief Publishes the tracking object position relative to FOV center and width,
+ * as type example_interfaces/msg/Float64.
+ */
 void ImageProcessor::publish_obj_position() {
     object_position_topic_->publish(position);
 }
 
+/**
+ * @brief Publishes the tracking object size relative to FOV size, as type 
+ * example_interfaces/msg/Float64.
+ */
 void ImageProcessor::publish_obj_size() {
     object_size_topic_->publish(size);
 }
 
+/**
+ * @brief Converts the tresholded and morphed image to sensor_msgs/msg/Image format,
+ * then publishes it.
+ * 
+ * @param image processed image, in cv::Mat format
+ */
 void ImageProcessor::publish_processed_image(cv::Mat image) {
 
     // transform img back to sensor_msg

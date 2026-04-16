@@ -4,14 +4,10 @@
 SteerRelbot::SteerRelbot() : Node("steer_relbot") {
     RCLCPP_INFO(this->get_logger(), "Init");
 
-    // #ifdef HAS_XRF2_MSGS
-    //     xrf2_included_ = true;
-    // #endif
-
     // initialize attributes
     left_velocity = 0;
     right_velocity = 0;
-    signal_interval_counter = 0;
+    signal_interval_counter = 0;    // used to determine time since last received signal
 
     // initialize topics
     create_topics();
@@ -22,7 +18,12 @@ SteerRelbot::SteerRelbot() : Node("steer_relbot") {
                                      std::bind(&SteerRelbot::timer_callback, this));
 }
 
+/**
+ * @brief Create all topics for this node. Two subscriptions for the tracking object position and
+ * size, and two publishers for desired left and right wheel velocities.
+ */
 void SteerRelbot::create_topics() {
+    // creating publishers
     left_wheel_topic_ = this->create_publisher<example_interfaces::msg::Float64>(
         "/input/left_motor/setpoint_vel", 1);
 
@@ -41,55 +42,73 @@ void SteerRelbot::create_topics() {
     RCLCPP_INFO(this->get_logger(), "Subscribed to topic: /image_processing/object_size");
 }
 
+/**
+ * @brief Store new tracking object position as class attribute when the topic is updated. Reset
+ * counter for signal intervals.
+ * 
+ * @param pos object position relative to FOV width and x-center
+ */
 void SteerRelbot::position_topic_callback(const example_interfaces::msg::Float64::SharedPtr pos) {
     object_position = pos->data;
     signal_interval_counter = 0; // reset counter of velocity callbacks since last position update
-    // RCLCPP_INFO(this->get_logger(), "Received object position");
 }
 
+/**
+ * @brief Store new tracking object size as class attribute when the topic is updated. Reset
+ * counter for signal intervals.
+ * 
+ * @param pos object size relative to FOV size
+ */
 void SteerRelbot::size_topic_callback(const example_interfaces::msg::Float64::SharedPtr size) {
     object_size = size->data;
     signal_interval_counter = 0; // reset counter of velocity callbacks since last size update
-    // RCLCPP_INFO(this->get_logger(), "Received object size");
 }
 
+/**
+ * @brief 
+ */
 void SteerRelbot::calculate_velocity() {
-    double distance_scale = -0.1558;
-    double distance_offset = -0.1198;
-    double distance = distance_scale*std::log(object_size)+distance_offset; // approximate distance in m based on object size relative to FOV size
-    RCLCPP_INFO(this->get_logger(), "Approximate distance: %f, object size: %f, object position: %f", distance, object_size, object_position);
-    double speed = 10;
-    double turn = 3;
-    double setpoint_distance = 0.3;
+    // calculate approximate distance of tracking object to camera
+    double distance = estimate_distance();
+    
+    // set velocity characteristics
+    double speed = 10;              // rad/s per m distance
+    double turn = 3;                // rad/s per x-offset unit in FOV
+    double setpoint_distance = 0.3; // target following distance in m
     double relative_distance = distance - setpoint_distance;
 
+    // calculate appropriate velocity
     if (object_size < 0.0001) { // if no object is detected
-        RCLCPP_INFO(this->get_logger(), "object size too small");
+        RCLCPP_INFO(this->get_logger(), "Object size too small");
         right_velocity = 0;
         left_velocity =  0;
     }
-    else if (relative_distance > 0){    // farther than setpoint following distance
-        RCLCPP_INFO(this->get_logger(), "Going forward - Approximate distance: %f, relative distance: %f", distance, relative_distance);
-        if (object_position < 0) {
-            right_velocity = relative_distance * speed - object_position * turn;
+    else if (relative_distance > 0){    // object distance farther than setpoint following distance
+        RCLCPP_INFO(this->get_logger(), "Going forward - Approx. dist: %f, dist to setpoint: %f, object size: %f, object position: %f, ", distance, relative_distance, object_size, object_position);
+        if (object_position < 0) {      // object to the left of image center
+            // base velocity proportional to relative distance, added turning velocity proportional to x-offset
+            right_velocity = relative_distance * speed - object_position * turn;    // turn left
             left_velocity = relative_distance * speed;    
         }
-        else if (object_position > 0) {
+        else if (object_position > 0) { // object to the right of image center
+            // base velocity proportional to relative distance, added turning velocity proportional to x-offset
             right_velocity = relative_distance * speed;    
-            left_velocity = relative_distance * speed + object_position * turn;
+            left_velocity = relative_distance * speed + object_position * turn;     // turn right
         }
-        else {
+        else {                          // object at image center
+            // base velocity proportional to relative distance, go straight ahead
             right_velocity = relative_distance * speed;
             left_velocity = relative_distance * speed;
         }
     }
-    else if (relative_distance < 0){    // closer than setpoint following distance
-        RCLCPP_INFO(this->get_logger(), "Going backward - Approximate distance: %f, relative distance: %f", distance, relative_distance);
-        if (object_position < 0) {
+    else if (relative_distance < 0){    // object distance closer than setpoint following distance
+        RCLCPP_INFO(this->get_logger(), "Going backward - Approx. dist: %f, dist to setpoint: %f, object size: %f, object position: %f, ", distance, relative_distance, object_size, object_position);
+        if (object_position < 0) {      // object to the left of image center
+            // base velocity proportional to relative distance, added turning velocity proportional to x-offset
             right_velocity = relative_distance * speed + object_position * turn;
             left_velocity = relative_distance * speed;    
         }
-        else if (object_position > 0) {
+        else if (object_position > 0) { // object to the right of image center
             right_velocity = relative_distance * speed;    
             left_velocity = relative_distance * speed - object_position * turn;
         }
@@ -103,8 +122,15 @@ void SteerRelbot::calculate_velocity() {
         right_velocity = 0;
         left_velocity =  0;
     }
+}
 
-    // RCLCPP_INFO(this->get_logger(), "Velocity: left %f, right %f", left_velocity, right_velocity);
+double SteerRelbot::estimate_distance() {
+    double distance_scale = -0.1558;
+    double distance_offset = -0.1198;
+
+    // calculate approximate distance in m based on object size relative to FOV size
+    double distance = distance_scale * std::log(object_size) + distance_offset; 
+    return distance;
 }
 
 void SteerRelbot::timer_callback() {
@@ -121,10 +147,7 @@ void SteerRelbot::timer_callback() {
     // publish velocity to simulator
     left_wheel.data = left_velocity;
     right_wheel.data = right_velocity;
-    // if (xrf2_included_ == false) {
-    //     RCLCPP_INFO(this->get_logger(), "on simulated RELbot: invert left wheel velocity");
-    //     left_wheel.data = left_velocity;
-    // }
+    // left wheel velociy is inverted on the simulator
     if (DEFAULT_ROBOT_MODE == "sim") {
         left_wheel.data = -left_velocity;
     }
