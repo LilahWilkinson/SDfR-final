@@ -1,3 +1,15 @@
+//==================================================================================================
+// Authors : I.M. Kramers & L.S. Wilkinson
+// Group : 14
+// License : LGPL open source license
+//
+// Brief : This package contains a node that receives information from image_processing (tracked 
+// object relative position and size), calculates appropriate left and right wheel velocities to 
+// follow the object at a pre-set distance, and publishes these velocities for use by either the 
+// real RELbot or simulator. If the image_processing node stops updating the object size and 
+// position, output velocity will be set to 0 after 2 seconds.
+//==================================================================================================
+
 #include "steering.hpp"
 #include <time.h>
 
@@ -57,7 +69,7 @@ void SteerRelbot::position_topic_callback(const example_interfaces::msg::Float64
  * @brief Store new tracking object size as class attribute when the topic is updated. Reset
  * counter for signal intervals.
  * 
- * @param pos object size relative to FOV size
+ * @param size object size relative to FOV size
  */
 void SteerRelbot::size_topic_callback(const example_interfaces::msg::Float64::SharedPtr size) {
     object_size = size->data;
@@ -131,7 +143,10 @@ void SteerRelbot::calculate_velocity() {
 }
 
 /**
- * @brief Estimate distance based on logarithmic 
+ * @brief Estimate distance in m using logarithmic fit (y = a * ln(bx)) of experimentally determined size vs. 
+ * distance values. 
+ * 
+ * @returns estimated object distance in m
  */
 double SteerRelbot::estimate_distance() {
     double distance_scale = -0.1558;
@@ -142,6 +157,12 @@ double SteerRelbot::estimate_distance() {
     return distance;
 }
 
+/**
+ * @brief periodically call calculate_velocity() and publish the desired wheel velocities. This 
+ * ensures a steady wheel velocity output to the simulator or RELbot. As a failsafe, this function 
+ * also checks whether the object size and position have been updated within the last 2 seconds. 
+ * If not, the velocity output will be set to 0 until new object data arrives.
+ */
 void SteerRelbot::timer_callback() {
     // calculate velocity
     calculate_velocity();
