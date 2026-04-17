@@ -99,26 +99,8 @@ void SteerRelbot::calculate_velocity() {
         right_velocity = 0;
         left_velocity =  0;
     }
-    else if (relative_distance > 0){    // object distance farther than setpoint following distance
-        RCLCPP_INFO(this->get_logger(), "Going forward - Approx. dist: %f, dist to setpoint: %f, object size: %f, object position: %f, ", distance, relative_distance, object_size, object_position);
-        if (object_position < 0) {      // object to the left of image center
-            // base velocity proportional to relative distance, added turning velocity proportional to x-offset
-            right_velocity = relative_distance * speed - object_position * turn;    // turn left
-            left_velocity = relative_distance * speed;    
-        }
-        else if (object_position > 0) { // object to the right of image center
-            // base velocity proportional to relative distance, added turning velocity proportional to x-offset
-            right_velocity = relative_distance * speed;    
-            left_velocity = relative_distance * speed + object_position * turn;     // turn right
-        }
-        else {                          // object at image center
-            // base velocity proportional to relative distance, go straight ahead
-            right_velocity = relative_distance * speed;
-            left_velocity = relative_distance * speed;
-        }
-    }
-    else if (relative_distance < 0){    // object distance closer than setpoint following distance
-        RCLCPP_INFO(this->get_logger(), "Going backward - Approx. dist: %f, dist to setpoint: %f, object size: %f, object position: %f, ", distance, relative_distance, object_size, object_position);
+    else if (relative_distance != 0){    // object distance farther than setpoint following distance
+        RCLCPP_INFO(this->get_logger(), "Approx. dist: %f, dist to setpoint: %f, object size: %f, object position: %f, ", distance, relative_distance, object_size, object_position);
         if (object_position < 0) {      // object to the left of image center
             // base velocity proportional to relative distance, added turning velocity proportional to x-offset
             right_velocity = relative_distance * speed - object_position * turn;    // turn 'left'
