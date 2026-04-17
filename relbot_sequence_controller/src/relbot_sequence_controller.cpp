@@ -65,7 +65,11 @@ void SteerRelbot::size_topic_callback(const example_interfaces::msg::Float64::Sh
 }
 
 /**
- * @brief 
+ * @brief Calculate velocity proportional to tracking object position and size. The function
+ * uses an estimate of the object distance in m and a pre-set following distance to get
+ * relative distance. If relative dist. > 0, the robot moves forward. If the object is to the 
+ * right of the image center, the robot turns right, and vice versa. If relative dist. < 0,
+ * the same is done but backwards.
  */
 void SteerRelbot::calculate_velocity() {
     // calculate approximate distance of tracking object to camera
@@ -105,14 +109,16 @@ void SteerRelbot::calculate_velocity() {
         RCLCPP_INFO(this->get_logger(), "Going backward - Approx. dist: %f, dist to setpoint: %f, object size: %f, object position: %f, ", distance, relative_distance, object_size, object_position);
         if (object_position < 0) {      // object to the left of image center
             // base velocity proportional to relative distance, added turning velocity proportional to x-offset
-            right_velocity = relative_distance * speed + object_position * turn;
+            right_velocity = relative_distance * speed - object_position * turn;    // turn 'left'
             left_velocity = relative_distance * speed;    
         }
         else if (object_position > 0) { // object to the right of image center
+            // base velocity proportional to relative distance, added turning velocity proportional to x-offset
             right_velocity = relative_distance * speed;    
-            left_velocity = relative_distance * speed - object_position * turn;
+            left_velocity = relative_distance * speed + object_position * turn;     // turn 'right'
         }
         else {
+            // base velocity proportional to relative distance, go straight backwards
             right_velocity = relative_distance * speed;
             left_velocity = relative_distance * speed;
         }
@@ -124,6 +130,9 @@ void SteerRelbot::calculate_velocity() {
     }
 }
 
+/**
+ * @brief Estimate distance based on logarithmic 
+ */
 double SteerRelbot::estimate_distance() {
     double distance_scale = -0.1558;
     double distance_offset = -0.1198;
